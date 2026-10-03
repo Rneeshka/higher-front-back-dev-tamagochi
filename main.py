@@ -1,37 +1,29 @@
 import os
 
+from game.clicker import RandomClicker
+from game.exceptions import NotEnoughMoney
+from game.game import SimpleGame
 from game.models import Food, Medicine
-from game.tamagochi import AbstractTamagochi
-from game.clicker import AbstractClicker
-from game.game import AbstractGame
+from game.tamagochi import SimpleTamagochi
 
 
 def main():
     all_food = [
         Food(name='Бургер', satiety=20, price=40),
         Food(name='Салат', satiety=10, price=20),
-        Food(name='Яблоко', satiety=10, price=15)
+        Food(name='Яблоко', satiety=10, price=15),
     ]
 
     all_medicine = [
         Medicine(name='Ибупрофен', price=30, heal_hp=20, number_of_uses=2)
     ]
 
-    #  Вместо AbstractTamagochi импортируйте
-    #  и создайте инстанс от своей реализации
-    tamagochi = AbstractTamagochi()
+    tamagochi = SimpleTamagochi()
 
-    #  Вместо AbstractClicker импортируйте
-    #  и создайте инстанс от своей реализации
-    clicker = AbstractClicker(10, 20)
+    clicker = RandomClicker(10, 20)
 
-    #  Вместо AbstractGame импортируйте
-    #  и создайте инстанс от своей реализации
-    game = AbstractGame(
-        tamagochi,
-        clicker,
-        all_food=all_food,
-        all_medicine=all_medicine
+    game = SimpleGame(
+        tamagochi, clicker, all_food=all_food, all_medicine=all_medicine
     )
 
     print("Добро пожаловать в Тамагочи-кликер!")
@@ -48,6 +40,11 @@ def main():
             f"\nСтатус: голод {status['hunger']}, здоровье {status['hp']}, "
             f"энергия {status['energy']}, монет {status['coins']}\n"
         )
+
+        if not game.tamagochi.is_alive():
+            print("Тамагочи погиб")
+            break
+
         if game.tamagochi.is_sick():
             print("=======Тамагочи болеет======")
             print("=======Отдых действует менее эффективно=======")
@@ -66,14 +63,23 @@ def main():
                 output = f'Вы заработали {income} монет'
                 game.tamagochi.update()
             case "2":
-                game.buy_food()
+                try:
+                    game.buy_food()
+                    output = "Еда куплена"
+                except NotEnoughMoney as error:
+                    output = str(error)
             case "3":
-                game.buy_medicine()
+                try:
+                    game.buy_medicine()
+                    output = "Лекарство куплено"
+                except NotEnoughMoney as error:
+                    output = str(error)
             case "4":
                 game.feed_tamagochi()
-
+                output = "Тамагочи поел"
             case "5":
                 game.heal_tamagochi()
+                output = "Тамагочи выздоровел"
             case "6":
                 game.play_with_tamagochi()
                 output = 'Вы поиграли с питомцем'
@@ -85,7 +91,7 @@ def main():
             case _:
                 output = "Неверная команда"
 
-        os.system('clear')
+        os.system('cls' if os.name == 'nt' else 'clear')
 
 
 if __name__ == "__main__":

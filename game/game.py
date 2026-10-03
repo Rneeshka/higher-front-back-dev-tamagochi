@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from copy import copy
 from typing import Any
 
-from exceptions import NotEnoughMoney
+from .exceptions import NotEnoughMoney
 
 from .clicker import AbstractClicker
 from .models import Food, Medicine
