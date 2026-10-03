@@ -139,12 +139,11 @@ class SimpleTamagochi(AbstractTamagochi):
         self._energy = max(MIN_STAT, self._energy - ENERGY_PLAY)
 
     def rest(self) -> None:
-        """Тамагочи восстанавливает энергию, если болен тяжелее
-        восстанавливает здоровье"""
+        """Отдых: восстанавливает энергию, при болезни слабее"""
         if self._sick:
             self._energy = min(MAX_STAT, self._energy + SICK_REST_ENERGY)
         else:
-            self._energy = min(MIN_STAT, self._energy + REST_ENERGY)
+            self._energy = min(MAX_STAT, self._energy + REST_ENERGY)
 
     def heal(self, medicine: Medicine) -> None:
         """
