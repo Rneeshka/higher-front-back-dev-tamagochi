@@ -1,7 +1,8 @@
-"""Модуль с интерфейсом и реализациями класса тамагочи"""
+"""Модуль с интерфейсом и реализациями класса тамагочи."""
 
 from abc import ABC, abstractmethod
 
+from .exceptions import MedicineIsEmpty
 from .models import Food, Medicine
 
 START_HP = 100
@@ -22,12 +23,12 @@ SICK_HP_LOSS = 10
 
 
 class AbstractTamagochi(ABC):
-    """Интерфейс логики тамагочи"""
+    """Интерфейс логики тамагочи."""
 
     @abstractmethod
     def feed(self, food: Food) -> None:
         """
-        Абстрактный метод для кормления тамагочи
+        Абстрактный метод для кормления тамагочи.
 
         :param food: объект еды для кормления
         """
@@ -35,18 +36,18 @@ class AbstractTamagochi(ABC):
 
     @abstractmethod
     def play(self) -> None:
-        """Абстрактный метод для игры с тамагочи"""
+        """Абстрактный метод для игры с тамагочи."""
         raise NotImplementedError
 
     @abstractmethod
     def rest(self) -> None:
-        """Абстрактный метод для отдыха тамагочи"""
+        """Абстрактный метод для отдыха тамагочи."""
         raise NotImplementedError
 
     @abstractmethod
     def heal(self, medicine: Medicine) -> None:
         """
-        Абстрактный метод для лечения тамагочи
+        Абстрактный метод для лечения тамагочи.
 
         :param medicine: лекарство для лечения
         """
@@ -56,7 +57,7 @@ class AbstractTamagochi(ABC):
     @abstractmethod
     def status(self) -> dict[str, int]:
         """
-        Абстрактное свойство для доступа ко всем состояниям тамагочи
+        Абстрактное свойство для доступа ко всем состояниям тамагочи.
 
         :return: словарь со всеми состояниями тамагочи
         """
@@ -65,7 +66,7 @@ class AbstractTamagochi(ABC):
     @abstractmethod
     def is_alive(self) -> bool:
         """
-        Абстрактный метод для проверки жив ли тамагочи
+        Абстрактный метод для проверки жив ли тамагочи.
 
         :return: True если жив, иначе False
         """
@@ -74,7 +75,7 @@ class AbstractTamagochi(ABC):
     @abstractmethod
     def is_sick(self) -> bool:
         """
-        Абстрактный метод для проверки, не заболел ли тамагочи
+        Абстрактный метод для проверки, не заболел ли тамагочи.
 
         :return: True если тамагочи болеет, иначе False
         """
@@ -84,16 +85,17 @@ class AbstractTamagochi(ABC):
     def update(self) -> None:
         """
         Абстрактный метод для обновления состояний тамагочи.
-        Должен использоваться после каждого взаимодействия с тамагочи
+
+        Должен использоваться после каждого взаимодействия с тамагочи.
         """
         raise NotImplementedError
 
 
 class SimpleTamagochi(AbstractTamagochi):
-    """Питомец Тамагочи"""
+    """Питомец Тамагочи."""
 
     def __init__(self) -> None:
-        """Создает питомца со стартовыми значениями"""
+        """Создает питомца со стартовыми значениями."""
         self._hp = START_HP
         self._hunger = START_HUNGER
         self._energy = START_ENERGY
@@ -102,7 +104,7 @@ class SimpleTamagochi(AbstractTamagochi):
     @property
     def status(self) -> dict[str, int]:
         """
-        Показывает состояние тамагочи: голод, здоровье и энергию
+        Показывает состояние тамагочи: голод, здоровье и энергию.
 
         :return: словарь с состояниями тамагочи: голод, здоровье и энергия
         """
@@ -110,7 +112,7 @@ class SimpleTamagochi(AbstractTamagochi):
 
     def is_alive(self) -> bool:
         """
-        Показывает жив ли тамагочи
+        Показывает жив ли тамагочи.
 
         :return: True если жив, иначе False
         """
@@ -118,7 +120,7 @@ class SimpleTamagochi(AbstractTamagochi):
 
     def is_sick(self) -> bool:
         """
-        Показывает болен ли тамагочи
+        Показывает болен ли тамагочи.
 
         :return: True если тамагочи болеет, иначе False
         """
@@ -139,7 +141,7 @@ class SimpleTamagochi(AbstractTamagochi):
         self._energy = max(MIN_STAT, self._energy - ENERGY_PLAY)
 
     def rest(self) -> None:
-        """Отдых: восстанавливает энергию, при болезни слабее"""
+        """Отдых: восстанавливает энергию, при болезни слабее."""
         if self._sick:
             self._energy = min(MAX_STAT, self._energy + SICK_REST_ENERGY)
         else:
@@ -147,18 +149,19 @@ class SimpleTamagochi(AbstractTamagochi):
 
     def heal(self, medicine: Medicine) -> None:
         """
-        Лечит тамагочи: восстанавливает здоровье и снимает болезнь
+        Лечит тамагочи: восстанавливает здоровье и снимает болезнь.
 
         :param medicine: лекарство для лечения
+        :raises MedicineIsEmpty: если лекарство уже закончилось
         """
+        if medicine.is_empty():
+            raise MedicineIsEmpty(f"{medicine.name} закончилось")
         self._hp = min(MAX_STAT, self._hp + medicine.heal_hp)
         self._sick = False
         medicine.uses += 1
 
     def update(self) -> None:
-        """
-        Обновляет состояние после хода: голод, энергию и болезнь
-        """
+        """Обновляет состояние после хода: голод, энергию и болезнь."""
         self._hunger = min(MAX_STAT, self._hunger + TICK_HUNGER)
         self._energy = max(MIN_STAT, self._energy - TICK_ENERGY)
         if (

@@ -1,13 +1,53 @@
+"""Точка входа в игру."""
+
 import os
 
 from game.clicker import RandomClicker
-from game.exceptions import NotEnoughMoney
+from game.exceptions import (
+    EmptyBag,
+    MedicineIsEmpty,
+    NotEnoughMoney,
+    TamagochiIsGone,
+)
 from game.game import SimpleGame
 from game.models import Food, Medicine
 from game.tamagochi import SimpleTamagochi
 
+MENU_ITEMS = [
+    "1. Пойти на работу",
+    "2. Купить еду",
+    "3. Купить лекарство",
+    "4. Покормить",
+    "5. Вылечить",
+    "6. Играть",
+    "7. Отдых",
+    "0. Выход",
+]
+MENU = '\n'.join(MENU_ITEMS)
 
-def main():
+STATUS = (
+    '\nСтатус: голод {hunger}, здоровье {hp}, '
+    'энергия {energy}, монет {coins}\n'
+)
+
+
+def ask_index(items: list) -> int | None:
+    """
+    Показывает список с номерами и спрашивает номер у игрока.
+
+    :param items: список еды или лекарств
+    :return: индекс в списке или None, если игрок нажал Enter
+    """
+    for number, item in enumerate(items, start=1):
+        print(f'{number}. {item.name}')
+    answer = input('Номер (Enter - по умолчанию): ')
+    if not answer:
+        return None
+    return int(answer) - 1
+
+
+def main() -> None:
+    """Запускает игровой цикл."""
     all_food = [
         Food(name='Бургер', satiety=20, price=40),
         Food(name='Салат', satiety=10, price=20),
@@ -34,62 +74,51 @@ def main():
 
         print(f"Сумка с едой: {game.food}")
         print(f"Сумка с лекарствами: {game.medicine}")
-
-        status = game.get_status()
-        print(
-            f"\nСтатус: голод {status['hunger']}, здоровье {status['hp']}, "
-            f"энергия {status['energy']}, монет {status['coins']}\n"
-        )
-
-        if not game.tamagochi.is_alive():
-            print("Тамагочи погиб")
-            break
+        print(STATUS.format(**game.get_status()))
 
         if game.tamagochi.is_sick():
             print("=======Тамагочи болеет======")
             print("=======Отдых действует менее эффективно=======")
-        print("1. Пойти на работу")
-        print("2. Купить еду")
-        print("3. Купить лекарство")
-        print("4. Покормить")
-        print("5. Вылечить")
-        print("6. Играть")
-        print("7. Отдых")
-        print("0. Выход")
+        print(MENU)
 
-        match input("Выберите действие: "):
-            case "1":
-                income = game.work()
-                output = f'Вы заработали {income} монет'
-                game.tamagochi.update()
-            case "2":
-                try:
-                    game.buy_food()
+        try:
+            match input("Выберите действие: "):
+                case "1":
+                    income = game.work()
+                    output = f'Вы заработали {income} монет'
+                case "2":
+                    game.buy_food(ask_index(all_food))
                     output = "Еда куплена"
-                except NotEnoughMoney as error:
-                    output = str(error)
-            case "3":
-                try:
-                    game.buy_medicine()
+                case "3":
+                    game.buy_medicine(ask_index(all_medicine))
                     output = "Лекарство куплено"
-                except NotEnoughMoney as error:
-                    output = str(error)
-            case "4":
-                game.feed_tamagochi()
-                output = "Тамагочи поел"
-            case "5":
-                game.heal_tamagochi()
-                output = "Тамагочи выздоровел"
-            case "6":
-                game.play_with_tamagochi()
-                output = 'Вы поиграли с питомцем'
-            case "7":
-                game.rest_tamagochi()
-                output = 'Питомец отдохнул'
-            case "0":
-                break
-            case _:
-                output = "Неверная команда"
+                case "4":
+                    game.feed_tamagochi(ask_index(game.food))
+                    output = "Тамагочи поел"
+                case "5":
+                    game.heal_tamagochi()
+                    output = "Тамагочи вылечился"
+                case "6":
+                    game.play_with_tamagochi()
+                    output = 'Вы поиграли с питомцем'
+                case "7":
+                    game.rest_tamagochi()
+                    output = 'Питомец отдохнул'
+                case "0":
+                    break
+                case _:
+                    output = "Неверная команда"
+        except (
+            NotEnoughMoney,
+            EmptyBag,
+            MedicineIsEmpty,
+            ValueError,
+            IndexError,
+        ) as error:
+            output = str(error)
+        except TamagochiIsGone as error:
+            print(error)
+            break
 
         os.system('cls' if os.name == 'nt' else 'clear')
 
